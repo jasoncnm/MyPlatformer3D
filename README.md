@@ -8,4 +8,6 @@
  [Unity ProBuilder](https://docs.unity3d.com/Packages/com.unity.probuilder@6.0/manual/index.html)
 
  # Quick Start
- Open [DEMO_LEVEL.unity](Assets/Scenes/) with the correct version of Unity in Assets/Scenes folder
+ Install Unity
+ 
+ Open [DEMO_LEVEL.unity](Assets/Scenes/) with Unity in the Assets/Scenes folder
