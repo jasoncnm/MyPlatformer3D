@@ -31,20 +31,31 @@ public class PlayerMovement : MonoBehaviour
     float turnSmoothVelocity;
     float jumpBufferCounter;
 
-    bool IsGound, JumpButtonDown,  JumpButtonUp;
-
+    bool IsGound, JumpButtonDown,  JumpButtonUp, reset;
 
     Vector3 direction;
+
+    Vector3 originalposition = new Vector3(0f, 1.55999994f, 0f);
+    Quaternion originalrotation = Quaternion.identity;
+    Vector3 originalscale = Vector3.one;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
+        reset = false;
         IsGound = true;
         speed = normalSpeed;
         rb = gameObject.GetComponent<Rigidbody>();
         sprintSpeed = 2 * normalSpeed;
         velPower = 0.7f;
         turnSmoothTime = 0.0473f;
+    }
+
+    private void Start()
+    {
+        transform.position = originalposition;
+        transform.rotation = originalrotation;
+        transform.localScale = originalscale;
     }
 
     // Update is called once per frame
@@ -54,11 +65,18 @@ public class PlayerMovement : MonoBehaviour
         InputAction SprintAction = InputSystem.actions.FindAction("Sprint");
         InputAction moveAction = InputSystem.actions.FindAction("Move");
 
+        if (Input.GetKeyDown(KeyCode.R)) reset = true;
+
+        if (reset)
+        {
+            ResetState();
+        }
+
         Vector2 MoveValue = moveAction.ReadValue<Vector2>();
 
         hMovement = MoveValue.x;
         vMovement = MoveValue.y;
-        Debug.Log(moveAction.ToString());
+        // Debug.Log(moveAction.ToString());
         // hMovement = Input.GetAxisRaw("Horizontal");
         // vMovement = Input.GetAxisRaw("Vertical");
         // desiredJump |= Input.GetButtonDown("Jump");
@@ -99,45 +117,48 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (direction.magnitude >= 0.1f)
+        if (!reset)
         {
-            Vector3 Dir = Quaternion.Euler(0.0f, targetAngle, 0.0f) * Vector3.forward;
-            // ector3 Dir = new Vector3(hMovement, 0.0f, vMovement);
+            if (direction.magnitude >= 0.1f)
+            {
+                Vector3 Dir = Quaternion.Euler(0.0f, targetAngle, 0.0f) * Vector3.forward;
+                // ector3 Dir = new Vector3(hMovement, 0.0f, vMovement);
 
-            Vector3 targetVelocity = Dir.normalized * speed;
+                Vector3 targetVelocity = Dir.normalized * speed;
 
-            Vector3 VelocityDiff = targetVelocity - rb.linearVelocity;
+                Vector3 VelocityDiff = targetVelocity - rb.linearVelocity;
 
-            float accelRate = acceleration;
+                float accelRate = acceleration;
 
-            Vector3 movement = new Vector3(Mathf.Pow(Mathf.Abs(VelocityDiff.x) * accelRate, velPower) * Mathf.Sign(VelocityDiff.x), 0.0f,
-                Mathf.Pow(Mathf.Abs(VelocityDiff.z) * accelRate, velPower) * Mathf.Sign(VelocityDiff.z));
+                Vector3 movement = new Vector3(Mathf.Pow(Mathf.Abs(VelocityDiff.x) * accelRate, velPower) * Mathf.Sign(VelocityDiff.x), 0.0f,
+                    Mathf.Pow(Mathf.Abs(VelocityDiff.z) * accelRate, velPower) * Mathf.Sign(VelocityDiff.z));
 
-            rb.AddForce(movement);
+                rb.AddForce(movement);
+            }
+            else if (IsGound)
+            {
+                if (ToggleSlide)
+                    rb.linearVelocity = Vector3.MoveTowards(rb.linearVelocity, Vector3.zero, decceleration * Time.fixedDeltaTime);
+                else
+                    rb.linearVelocity = Vector3.zero;
+
+            }
+
+
+
+
+            /*
+
+            if (desiredJump)    
+            {
+                desiredJump = false;
+                Jump();
+            }
+
+
+            IsGound = false;
+            */
         }
-        else if (IsGound)
-        {
-            if (ToggleSlide)
-                rb.linearVelocity = Vector3.MoveTowards(rb.linearVelocity, Vector3.zero, decceleration * Time.fixedDeltaTime);
-            else
-                rb.linearVelocity = Vector3.zero;
-                
-        }
-
-
-        
-
-        /*
-        
-        if (desiredJump)    
-        {
-            desiredJump = false;
-            Jump();
-        }
-        
-
-        IsGound = false;
-        */
 
     }
 
@@ -193,5 +214,14 @@ public class PlayerMovement : MonoBehaviour
         {
             int i = 0;
         }
+    }
+
+    public void ResetState()
+    {
+        reset = false;
+        transform.position = originalposition;
+        transform.rotation = originalrotation;
+        transform.localScale = originalscale;
+        rb.linearVelocity = Vector3.zero;
     }
 }
