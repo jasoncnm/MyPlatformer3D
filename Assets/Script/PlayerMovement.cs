@@ -1,3 +1,4 @@
+using System.Collections;
 using Unity.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -23,6 +24,8 @@ public class PlayerMovement : MonoBehaviour
     float decceleration;
 
     [SerializeField, Range(0f, 1f)] float jumpBufferTime = 0.2f;
+    [SerializeField, Range(0f, 1f)] float releaseBufferTime = 0.2f;
+
 
     [SerializeField]
     bool ToggleSlide = true;
@@ -95,7 +98,7 @@ public class PlayerMovement : MonoBehaviour
         
         if (buttonDown)
         {
-            jumpBufferCounter = jumpBufferTime;
+            jumpBufferCounter = releaseBufferTime;
         }
         else
         {
@@ -118,10 +121,11 @@ public class PlayerMovement : MonoBehaviour
         if (_jump)
         {
             jumpBufferCounter = 0f;
-            rb.linearVelocity += Vector3.up * jump;
+            // rb.linearVelocity += Vector3.up * jump;
+            rb.AddForce(Vector3.up * jump, ForceMode.Impulse);
             _jump = false;
         }
-        else if (_jumpReleased)
+        if (_jumpReleased)
         {
             _jumpReleased = false;  
             rb.linearVelocity = Vector3.Scale(rb.linearVelocity, new Vector3(1f, 0.5f, 1f));
@@ -129,6 +133,8 @@ public class PlayerMovement : MonoBehaviour
         }
 
     }
+
+
     void SimulateMovement(float dirX, float dirZ, bool sprint)
     {
         if (sprint)
@@ -177,6 +183,11 @@ public class PlayerMovement : MonoBehaviour
         Ray ray = new Ray(sphereCollider.bounds.center + Vector3.up * offset, Vector3.down);
 
         bool result = Physics.SphereCast(ray, sphereCollider.bounds.extents.y, out rayHit, extraHeightTest);
+
+        if (result && _jump == false)
+        {
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        }
 
         Debug.Log(rayHit.collider);
         return result;
