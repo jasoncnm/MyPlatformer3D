@@ -10,11 +10,6 @@ public class SetColor : MonoBehaviour
 
     private void Start()
     {
-        start = true;
-    }
-
-    private void OnValidate()
-    {
         if (start)
         {
             foreach (Renderer renderer in renderers)

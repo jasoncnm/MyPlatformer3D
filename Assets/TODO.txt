@@ -1,6 +1,5 @@
 TODO:
- 1. Create see through in different material 
+ 1. Implement coyote time
  3. slop movement logic 
  4. stair logic
  5. jumpad squash and stretch
- 6. BUG: Player does not fall when running off the edges
