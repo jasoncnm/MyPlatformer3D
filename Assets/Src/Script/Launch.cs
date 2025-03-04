@@ -16,6 +16,7 @@ public class Launch : MonoBehaviour
         {
             Debug.Log("Triggered Player");
             Rigidbody rb = other.transform.GetComponent<Rigidbody>();
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
             rb.AddForce(directions[(int)dirIndex] * launchSpeed, ForceMode.Impulse);
         }
     }
