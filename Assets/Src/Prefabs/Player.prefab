@@ -175,16 +175,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b0d954f2334b294187239a0557eaa4a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sprintFactor: 1.3
+  sprintFactor: 1.2
   normalSpeed: 40
+  maxSpeed: 0
   acceleration: 70
   jump: 35
-  frictionAmount: 0.15
+  groundDecceleration: 0
+  airDecceleration: 0
   Cam: {fileID: 0}
   turnSmoothTime: 0.073
-  decceleration: 150
-  jumpBufferTime: 0.15
+  jumpBufferTime: 0.111
   releaseBufferTime: 0.2
+  maxGroundAngle: 38
   ToggleSlide: 1
   groundedMask:
     serializedVersion: 2
