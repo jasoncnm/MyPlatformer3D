@@ -1,5 +1,3 @@
 TODO:
- 1. Implement coyote time
- 3. slop movement logic 
- 4. stair logic
- 5. jumpad squash and stretch
+ - jumpad squash and stretch
+ - New Mechanic: flip platform while jump 

@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 7567631106857273093}
   - component: {fileID: 4416771385659518740}
   - component: {fileID: 6672912922104103627}
-  - component: {fileID: 5961227024315018729}
   - component: {fileID: 164103490099707544}
   - component: {fileID: 4590329537238711390}
   - component: {fileID: 576458241452702830}
@@ -121,27 +120,6 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 112
   m_CollisionDetection: 1
---- !u!65 &5961227024315018729
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6842750655166200177}
-  m_Material: {fileID: 13400000, guid: ab47de45190170742bab59ba85652e39, type: 2}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 3
-  m_Size: {x: 0.73684204, y: 1.2631575, z: 0.7368389}
-  m_Center: {x: 0, y: -0.27, z: 0}
 --- !u!135 &164103490099707544
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -175,23 +153,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b0d954f2334b294187239a0557eaa4a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sprintFactor: 1.2
-  normalSpeed: 40
-  maxSpeed: 0
+  gravityScale: 35
+  sprintFactor: 2
+  normalSpeed: 20
+  maxSpeed: 100
   acceleration: 70
-  jump: 35
-  groundDecceleration: 0
-  airDecceleration: 0
+  jump: 40
+  groundDecceleration: 200
+  airDecceleration: 60
+  slopeDecceleration: 500
   Cam: {fileID: 0}
-  turnSmoothTime: 0.073
+  turnSmoothTime: 0.0473
   jumpBufferTime: 0.111
+  coyoteTime: 0.2
   releaseBufferTime: 0.2
-  maxGroundAngle: 38
+  maxGroundAngle: 40
   ToggleSlide: 1
   groundedMask:
     serializedVersion: 2
     m_Bits: 192
-  sphereCollider: {fileID: 164103490099707544}
+  sphereCollider: {fileID: 0}
 --- !u!114 &576458241452702830
 MonoBehaviour:
   m_ObjectHideFlags: 0

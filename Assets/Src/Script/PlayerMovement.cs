@@ -3,23 +3,28 @@ using Unity.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering.Universal.Internal;
 
 public class PlayerMovement : MonoBehaviour
 {
     Rigidbody rb;
 
+
+    [SerializeField, Range(1f, 100f)]
+    float gravityScale = 10f;
+
     [SerializeField, Range(1f, 2f)]
     float sprintFactor = 1.5f;
     
     [SerializeField]
-    float normalSpeed, maxSpeed, acceleration, jump, groundDecceleration, airDecceleration, slopeDecceleration;
+    float normalSpeed, maxSpeed, acceleration, jump, groundDecceleration, airDecceleration, slopeDecceleration, frictionAmount;
     [SerializeField]
     Transform Cam;
 
     [SerializeField, Range(0f, .1f)]
     float turnSmoothTime;
 
-    [SerializeField, Range(0f, 1f)] float jumpBufferTime = 0.2f;
+    [SerializeField, Range(0f, 1f)] float jumpBufferTime = 0.2f, coyoteTime = 0.2f;
     [SerializeField, Range(0f, 1f)] float releaseBufferTime = 0.2f;
 
     [SerializeField, Range(0f, 90f)]
@@ -35,39 +40,50 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField]
     SphereCollider sphereCollider;
 
+    BetterJump fallComponent;
+
     float speed;
     
     float velPower;
     float turnSmoothVelocity;
     float jumpBufferCounter;
-    float extraHeightTest = .2f;
-    float offset = 0.1f;
     float minGroundDotProduct;
+    float coyoteTimeCounter;
+    float slopeDeceleration;
 
-    bool _Grounded = false;
+    bool _Grounded = true;
     bool _SlopeStop = false;
     bool _Jump = false;
     bool _JumpReleased = false;
+    bool _NoInput = false;
+    bool _OnSlope = false;
+    
+
     Vector3 forwardMovement, backwardMovement;
     Vector3 contactNormal;
 
     Vector3 originalposition = new Vector3(0f, 1.55999994f, 0f);
     Quaternion originalrotation = Quaternion.identity;
     Vector3 originalscale = Vector3.one;
+    Vector3 originalGravity = Physics.gravity;
+    
 
     private void OnValidate()
     {
+        Physics.gravity = Vector3.down * gravityScale;
         minGroundDotProduct = Mathf.Cos(maxGroundAngle * Mathf.Deg2Rad);
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
+        fallComponent = transform.GetComponent<BetterJump>();
         OnValidate();
         speed = normalSpeed;
         rb = gameObject.GetComponent<Rigidbody>();
         velPower = 0.7f;
         turnSmoothTime = 0.0473f;
+        _NoInput = true;
     }
 
     private void Start()
@@ -82,13 +98,12 @@ public class PlayerMovement : MonoBehaviour
     {
         InputAction SprintAction = InputSystem.actions.FindAction("Sprint");
         InputAction moveAction = InputSystem.actions.FindAction("Move");
-
         Vector2 MoveValue = moveAction.ReadValue<Vector2>();
-
-        
-
         bool JumpButtonDown = Input.GetButtonDown("Jump");
         bool JumpButtonUp = Input.GetButtonUp("Jump");
+
+        _NoInput |= !Input.anyKeyDown;
+
         Vector3 direction = new Vector3(MoveValue.x, 0.0f, MoveValue.y).normalized;
 
         SimulateMovement(direction.x, direction.z, SprintAction.IsPressed());
@@ -98,11 +113,21 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-
+        if (_NoInput && _OnSlope)
+        {
+            
+        }
+        else
+        {
+            //fallComponent.SetFall(true);
+        }
         Jump();
         move();
+
+        _NoInput = false;
         _Grounded = false;
         _SlopeStop = false;
+        _OnSlope = false;
     }
 
     void SimulateJump(bool buttonDown, bool buttonUp)
@@ -117,7 +142,16 @@ public class PlayerMovement : MonoBehaviour
             jumpBufferCounter -= Time.deltaTime;
         }
 
-        if ((jumpBufferCounter > 0f) && _Grounded)
+        if (_Grounded)
+        {
+            coyoteTimeCounter = coyoteTime;
+        }
+        else
+        {
+            coyoteTimeCounter -= Time.deltaTime;
+        }
+
+        if ((jumpBufferCounter > 0f) && (coyoteTimeCounter > 0f))
         {
             _Jump = true;
         }
@@ -134,16 +168,13 @@ public class PlayerMovement : MonoBehaviour
         
         if (_Jump)
         {
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
             jumpBufferCounter = 0f;
-
-            float alignedSpeed = Vector3.Dot(rb.linearVelocity, contactNormal);
-            if (alignedSpeed > 0f)
-            {
-                jump = Mathf.Max(jump - alignedSpeed, 0f);
-            }
-            rb.AddForce(contactNormal * jump, ForceMode.Impulse);
+            coyoteTimeCounter = 0f;
+            rb.AddForce(Vector3.up * jump, ForceMode.Impulse);
             _Jump = false;
         }
+
         if (_JumpReleased)
         {
             _JumpReleased = false;  
@@ -194,42 +225,12 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // Debug.Log("DIRX: " + dirX.ToString() + " DIRZ: " + dirZ.ToString());
-        forwardMovement = GetPlayerVelocity(dirX, dirZ);
-        backwardMovement = -forwardMovement;
+        forwardMovement = Vector3.ProjectOnPlane(GetPlayerVelocity(dirX, dirZ), contactNormal);
     }
 
-#if false
-    bool IsGrounded()
-    {
-        RaycastHit rayHit;
-       // NOTE: Hacky way (maybe the only way) to prevent the spherecast not detect the touching object
-        Ray ray = new Ray(sphereCollider.bounds.center + Vector3.up * offset, Vector3.down);
-
-        bool result = Physics.SphereCast(ray, sphereCollider.bounds.extents.y, out rayHit, extraHeightTest);
-
-        result = result && rayHit.normal.y >= minGroundDotProduct;
-
-        if (result)
-        {
-            contactNormal = rayHit.normal.normalized;
-            if (_jump == false)
-                rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-        }
-        else
-        {
-            contactNormal = Vector3.up;
-        }
-
-        Debug.Log(rayHit.collider);
-        return result;
-    }
-
-#endif
 
     void move()
     {
-
-        Debug.Log(_SlopeStop);
 
         rb.AddForce(forwardMovement);
 
@@ -242,16 +243,23 @@ public class PlayerMovement : MonoBehaviour
             hVel = hVel.normalized * maxSpeed;
             rb.linearVelocity = new Vector3(hVel.x, rb.linearVelocity.y, hVel.z);
         }
-
-        if (forwardMovement.magnitude < 0.01f)
+        Debug.Log("Forward Direction = " + forwardDir.ToShortString() + " Reverse Direction = " + reverseDir.ToShortString());
+        if (forwardMovement.magnitude < 0.01f && rb.linearVelocity.magnitude > 1f)
         {
-            Debug.Log("StopMoving!");
-            if (_Grounded)
+            forwardDir = rb.linearVelocity.normalized;
+            reverseDir = -forwardDir;
+
+            if (_OnSlope)
+            {
+                decceleration = slopeDecceleration;
+            }
+            else if (_Grounded)
             {
                 decceleration = groundDecceleration;
             }
             else if (!_SlopeStop)
             {
+                reverseDir.y = 0;
                 decceleration = airDecceleration;
             }
             else
@@ -259,11 +267,14 @@ public class PlayerMovement : MonoBehaviour
                 decceleration = 0f;
             }
 
-            rb.linearVelocity = Vector3.MoveTowards(rb.linearVelocity, new Vector3(0f, rb.linearVelocity.y, 0f),
-                decceleration * Time.fixedDeltaTime);
+            rb.AddForce(reverseDir * decceleration);
+
+            //rb.linearVelocity = Vector3.MoveTowards(rb.linearVelocity, new Vector3(0f, rb.linearVelocity.y, 0f),
+                //decceleration * Time.fixedDeltaTime);
+
         }
     }
-
+    public Vector3 forwardDir, reverseDir;
     void DebugPause()
     {
         if (Input.GetKeyDown(KeyCode.P))
@@ -285,11 +296,15 @@ public class PlayerMovement : MonoBehaviour
         for (int i = 0; i < collision.contactCount; i++)
         {
             Vector3 normal = collision.GetContact(i).normal;
-            Debug.Log(normal.y);
+            // Debug.Log(normal.y);
             if (normal.y >= minGroundDotProduct)
             {
                 _Grounded = true;
                 contactNormal = normal;
+                if (normal.y < 0.9f)
+                {
+                    _OnSlope = true;
+                }
             }
             else if (normal.y > 0f)
             {
@@ -311,6 +326,11 @@ public class PlayerMovement : MonoBehaviour
     private void OnCollisionExit(Collision collision)
     {
         _Grounded = false;
+    }
+
+    public bool IsGround()
+    {
+        return coyoteTimeCounter > 0f;
     }
 
 }

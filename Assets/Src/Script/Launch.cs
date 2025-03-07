@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class Launch : MonoBehaviour
 {
-    Vector3[] directions = { Vector3.up, Vector3.down, Vector3.left, Vector3.right };
-    enum LaunchDirection { Up, Down, Left, Right};
+    Vector3[] directions = { Vector3.up, Vector3.down, Vector3.left, Vector3.right, Vector3.forward, Vector3.back };
+    enum LaunchDirection { Up, Down, Left, Right, front, back};
 
     
     [SerializeField] float launchSpeed;
