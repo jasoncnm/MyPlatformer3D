@@ -12,7 +12,7 @@ public class PlayerMovement : MonoBehaviour
     float sprintFactor = 1.5f;
     
     [SerializeField]
-    float normalSpeed, maxSpeed, acceleration, jump, groundDecceleration, airDecceleration;
+    float normalSpeed, maxSpeed, acceleration, jump, groundDecceleration, airDecceleration, slopeDecceleration;
     [SerializeField]
     Transform Cam;
 
@@ -36,7 +36,7 @@ public class PlayerMovement : MonoBehaviour
     SphereCollider sphereCollider;
 
     float speed;
-    float targetAngle = 0.0f;
+    
     float velPower;
     float turnSmoothVelocity;
     float jumpBufferCounter;
@@ -45,9 +45,10 @@ public class PlayerMovement : MonoBehaviour
     float minGroundDotProduct;
 
     bool _Grounded = false;
-    bool _jump = false;
-    bool _jumpReleased = false;
-    Vector3 movement;
+    bool _SlopeStop = false;
+    bool _Jump = false;
+    bool _JumpReleased = false;
+    Vector3 forwardMovement, backwardMovement;
     Vector3 contactNormal;
 
     Vector3 originalposition = new Vector3(0f, 1.55999994f, 0f);
@@ -84,12 +85,12 @@ public class PlayerMovement : MonoBehaviour
 
         Vector2 MoveValue = moveAction.ReadValue<Vector2>();
 
+        
+
         bool JumpButtonDown = Input.GetButtonDown("Jump");
         bool JumpButtonUp = Input.GetButtonUp("Jump");
         Vector3 direction = new Vector3(MoveValue.x, 0.0f, MoveValue.y).normalized;
 
-        _Grounded = IsGrounded();
-        
         SimulateMovement(direction.x, direction.z, SprintAction.IsPressed());
         SimulateJump(JumpButtonDown, JumpButtonUp);
     }
@@ -101,6 +102,7 @@ public class PlayerMovement : MonoBehaviour
         Jump();
         move();
         _Grounded = false;
+        _SlopeStop = false;
     }
 
     void SimulateJump(bool buttonDown, bool buttonUp)
@@ -117,33 +119,67 @@ public class PlayerMovement : MonoBehaviour
 
         if ((jumpBufferCounter > 0f) && _Grounded)
         {
-            _jump = true;
+            _Jump = true;
         }
         else if (buttonUp && rb.linearVelocity.y > 0f)
         {
-            _jumpReleased = true;
+            _JumpReleased = true;
         }
+
+        if (!_Grounded) contactNormal = Vector3.up;
 
     }
     void Jump()
     {
         
-        if (_jump)
+        if (_Jump)
         {
             jumpBufferCounter = 0f;
-            // rb.linearVelocity += Vector3.up * jump;
+
+            float alignedSpeed = Vector3.Dot(rb.linearVelocity, contactNormal);
+            if (alignedSpeed > 0f)
+            {
+                jump = Mathf.Max(jump - alignedSpeed, 0f);
+            }
             rb.AddForce(contactNormal * jump, ForceMode.Impulse);
-            _jump = false;
+            _Jump = false;
         }
-        if (_jumpReleased)
+        if (_JumpReleased)
         {
-            _jumpReleased = false;  
+            _JumpReleased = false;  
             rb.linearVelocity = Vector3.Scale(rb.linearVelocity, new Vector3(1f, 0.5f, 1f));
             // rb.linearVelocity = new Vector3(rb.linearVelocity.x, rb.linearVelocity.y * 0.5f, rb.linearVelocity.z);
         }
 
     }
 
+    Vector3 GetPlayerVelocity(float dirX, float dirZ)
+    {
+        if (Mathf.Abs(dirX) > 0f || Mathf.Abs(dirZ) > 0f)
+        {
+            float targetAngle = Mathf.Atan2(dirX, dirZ) * Mathf.Rad2Deg + Cam.eulerAngles.y;
+            targetAngle = Mathf.Abs(targetAngle) < 0.0001f ? 0 : targetAngle;
+            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+            angle = Mathf.Abs(angle) < 0.0001f ? 0 : angle;
+
+            transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
+
+            Vector3 Dir = Quaternion.Euler(0.0f, targetAngle, 0.0f) * Vector3.forward;
+
+            Vector3 targetVelocity = Dir.normalized * speed;
+
+            Vector3 VelocityDiff = targetVelocity - rb.linearVelocity;
+
+            float accelRate = acceleration;
+
+            return new Vector3(Mathf.Pow(Mathf.Abs(VelocityDiff.x) * accelRate, velPower) * Mathf.Sign(VelocityDiff.x), 0.0f,
+                Mathf.Pow(Mathf.Abs(VelocityDiff.z) * accelRate, velPower) * Mathf.Sign(VelocityDiff.z));
+        }
+        else
+        {
+            return Vector3.zero;
+        }
+    }
 
     void SimulateMovement(float dirX, float dirZ, bool sprint)
     {
@@ -158,34 +194,11 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // Debug.Log("DIRX: " + dirX.ToString() + " DIRZ: " + dirZ.ToString());
-        if (Mathf.Abs(dirX) > 0f || Mathf.Abs(dirZ) > 0f)
-        {
-            targetAngle = Mathf.Atan2(dirX, dirZ) * Mathf.Rad2Deg + Cam.eulerAngles.y;
-            targetAngle = Mathf.Abs(targetAngle) < 0.0001f ? 0 : targetAngle;
-            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
-            angle = Mathf.Abs(angle) < 0.0001f ? 0 : angle;
-
-            transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
-
-            Vector3 Dir = Quaternion.Euler(0.0f, targetAngle, 0.0f) * Vector3.forward;
-
-
-            Vector3 targetVelocity = Dir.normalized * speed;
-
-            Vector3 VelocityDiff = targetVelocity - rb.linearVelocity;
-
-            float accelRate = acceleration;
-
-            movement = new Vector3(Mathf.Pow(Mathf.Abs(VelocityDiff.x) * accelRate, velPower) * Mathf.Sign(VelocityDiff.x), 0.0f,
-                Mathf.Pow(Mathf.Abs(VelocityDiff.z) * accelRate, velPower) * Mathf.Sign(VelocityDiff.z));
-        }
-        else
-        {
-            movement = Vector3.zero;
-        }
-
+        forwardMovement = GetPlayerVelocity(dirX, dirZ);
+        backwardMovement = -forwardMovement;
     }
 
+#if false
     bool IsGrounded()
     {
         RaycastHit rayHit;
@@ -211,9 +224,16 @@ public class PlayerMovement : MonoBehaviour
         return result;
     }
 
+#endif
+
     void move()
     {
-        rb.AddForce(movement);
+
+        Debug.Log(_SlopeStop);
+
+        rb.AddForce(forwardMovement);
+
+
         float decceleration;
 
         Vector3 hVel = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
@@ -223,16 +243,25 @@ public class PlayerMovement : MonoBehaviour
             rb.linearVelocity = new Vector3(hVel.x, rb.linearVelocity.y, hVel.z);
         }
 
-        if (_Grounded)
+        if (forwardMovement.magnitude < 0.01f)
         {
-            decceleration = groundDecceleration;
+            Debug.Log("StopMoving!");
+            if (_Grounded)
+            {
+                decceleration = groundDecceleration;
+            }
+            else if (!_SlopeStop)
+            {
+                decceleration = airDecceleration;
+            }
+            else
+            {
+                decceleration = 0f;
+            }
+
+            rb.linearVelocity = Vector3.MoveTowards(rb.linearVelocity, new Vector3(0f, rb.linearVelocity.y, 0f),
+                decceleration * Time.fixedDeltaTime);
         }
-        else
-        {
-            decceleration = airDecceleration;
-        }
-        rb.linearVelocity = Vector3.MoveTowards(rb.linearVelocity, new Vector3(0f, rb.linearVelocity.y, 0f),
-           decceleration * Time.fixedDeltaTime);
     }
 
     void DebugPause()
@@ -250,4 +279,38 @@ public class PlayerMovement : MonoBehaviour
         transform.localScale = originalscale;
         rb.linearVelocity = Vector3.zero;
     }
+
+    void EvaluateColllision(Collision collision)
+    {
+        for (int i = 0; i < collision.contactCount; i++)
+        {
+            Vector3 normal = collision.GetContact(i).normal;
+            Debug.Log(normal.y);
+            if (normal.y >= minGroundDotProduct)
+            {
+                _Grounded = true;
+                contactNormal = normal;
+            }
+            else if (normal.y > 0f)
+            {
+                _SlopeStop = true;
+            }
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        EvaluateColllision(collision);
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        EvaluateColllision(collision);
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        _Grounded = false;
+    }
+
 }

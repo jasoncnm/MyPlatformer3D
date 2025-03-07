@@ -3,4 +3,3 @@ TODO:
  3. slop movement logic 
  4. stair logic
  5. jumpad squash and stretch
- 8. Rendering Order mixed up. (Are they rendered from far to near? Maybe we should render object from bottom to up)

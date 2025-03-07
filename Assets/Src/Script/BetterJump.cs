@@ -16,7 +16,7 @@ public class BetterJump : MonoBehaviour
         rb = GetComponent<Rigidbody>();
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (rb.linearVelocity.y < -1 * maxSpeed)
         {
