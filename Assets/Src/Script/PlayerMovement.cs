@@ -17,7 +17,7 @@ public class PlayerMovement : MonoBehaviour
     float sprintFactor = 1.5f;
     
     [SerializeField]
-    float normalSpeed, maxSpeed, acceleration, jump, groundDecceleration, airDecceleration, slopeDecceleration, frictionAmount;
+    float normalSpeed, maxSpeed, acceleration, jump, groundFriction, airFriction;
     [SerializeField]
     Transform Cam;
 
@@ -36,9 +36,6 @@ public class PlayerMovement : MonoBehaviour
 
     [SerializeField]
     LayerMask groundedMask;
-
-    [SerializeField]
-    SphereCollider sphereCollider;
 
     BetterJump fallComponent;
 
@@ -71,6 +68,7 @@ public class PlayerMovement : MonoBehaviour
     private void OnValidate()
     {
         Physics.gravity = Vector3.down * gravityScale;
+        originalGravity = Physics.gravity;
         minGroundDotProduct = Mathf.Cos(maxGroundAngle * Mathf.Deg2Rad);
     }
 
@@ -113,14 +111,15 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (_NoInput && _OnSlope)
+        if (_OnSlope)
         {
-            
+            Physics.gravity = Vector3.zero;
         }
         else
         {
-            //fallComponent.SetFall(true);
+            Physics.gravity = originalGravity;
         }
+        
         Jump();
         move();
 
@@ -235,7 +234,7 @@ public class PlayerMovement : MonoBehaviour
         rb.AddForce(forwardMovement);
 
 
-        float decceleration;
+        float friction;
 
         Vector3 hVel = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
         if (hVel.magnitude > maxSpeed)
@@ -244,30 +243,28 @@ public class PlayerMovement : MonoBehaviour
             rb.linearVelocity = new Vector3(hVel.x, rb.linearVelocity.y, hVel.z);
         }
         Debug.Log("Forward Direction = " + forwardDir.ToShortString() + " Reverse Direction = " + reverseDir.ToShortString());
-        if (forwardMovement.magnitude < 0.01f && rb.linearVelocity.magnitude > 1f)
+        if (forwardMovement.magnitude < 0.01f)
         {
             forwardDir = rb.linearVelocity.normalized;
             reverseDir = -forwardDir;
 
-            if (_OnSlope)
+            if (_Grounded)
             {
-                decceleration = slopeDecceleration;
-            }
-            else if (_Grounded)
-            {
-                decceleration = groundDecceleration;
+                friction = groundFriction;
             }
             else if (!_SlopeStop)
             {
                 reverseDir.y = 0;
-                decceleration = airDecceleration;
+                friction = airFriction;
             }
             else
             {
-                decceleration = 0f;
+                friction = 0f;
             }
 
-            rb.AddForce(reverseDir * decceleration);
+            float amount = Mathf.Min(rb.linearVelocity.magnitude, Mathf.Abs(friction));
+
+            rb.AddForce(reverseDir * amount, ForceMode.Impulse);
 
             //rb.linearVelocity = Vector3.MoveTowards(rb.linearVelocity, new Vector3(0f, rb.linearVelocity.y, 0f),
                 //decceleration * Time.fixedDeltaTime);
