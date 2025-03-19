@@ -20,7 +20,6 @@ public class BetterJump : MonoBehaviour
 
     private void FixedUpdate()
     {
-        Debug.Log(_Fall);
         if (_Fall)
         {
             if (rb.linearVelocity.y < -1 * maxSpeed)

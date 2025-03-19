@@ -41,8 +41,7 @@ public class CircleSync : MonoBehaviour
         }
 
         if (mat != null)
-        { 
-            Debug.Log("!!!!!");
+        {
             float size = Mathf.Lerp(0f, 0.5f, duration);
             mat.SetFloat(SizeID, size);
             duration += Time.deltaTime * lerpSpeed;

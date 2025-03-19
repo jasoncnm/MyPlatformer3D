@@ -10,13 +10,15 @@ public class Launch : MonoBehaviour
     [SerializeField] LaunchDirection dirIndex;
 
 
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
         {
             Debug.Log("Triggered Player");
             Rigidbody rb = other.transform.GetComponent<Rigidbody>();
-            rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+            Vector3 v = Vector3.Scale(rb.linearVelocity, directions[(int)dirIndex]);
+            rb.linearVelocity -= v;
             rb.AddForce(directions[(int)dirIndex] * launchSpeed, ForceMode.Impulse);
         }
     }
