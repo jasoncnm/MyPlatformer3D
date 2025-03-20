@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
@@ -5,6 +6,7 @@ using UnityEngine.InputSystem;
 [CreateAssetMenu(menuName = "Input/Input Reader", fileName = "Input Reader")]
 public class InputReader : ScriptableObject
 {
+    
     [SerializeField] public InputActionAsset asset;
 
     public event UnityAction<Vector2> moveEvent;
@@ -14,15 +16,23 @@ public class InputReader : ScriptableObject
     public event UnityAction sprintEvent;
     public event UnityAction sprintCancelledEvent;
 
+    public event UnityAction pauseEvent;
+    public event UnityAction unPauseEvent;
+
     InputAction moveAction;
     InputAction sprintAction;
     InputAction jumpAction;
+    InputAction pauseAction;
+    InputAction unPauseAction;
 
     private void OnEnable()
     {
+        
         moveAction = asset.FindAction("Move", true);
         sprintAction = asset.FindAction("Sprint", true);
         jumpAction = asset.FindAction("Jump", true);
+        pauseAction = asset.FindAction("Pause", true);
+        unPauseAction = asset.FindAction("UnPause", true);
 
         moveAction.started   += OnMove;
         moveAction.performed += OnMove;
@@ -36,9 +46,19 @@ public class InputReader : ScriptableObject
         jumpAction.performed += OnJump;
         jumpAction.canceled  += OnJump;
 
+        pauseAction.started   += OnPause;
+        pauseAction.performed += OnPause;
+        pauseAction.canceled  += OnPause;
+
+        unPauseAction.started += OnUnPause;
+        unPauseAction.performed += OnUnPause;
+        unPauseAction.canceled += OnUnPause;
+
         moveAction.Enable();
         sprintAction.Enable();
         jumpAction.Enable();
+        pauseAction.Enable();
+        unPauseAction.Enable();
 
     }
 
@@ -55,11 +75,36 @@ public class InputReader : ScriptableObject
         jumpAction.started -= OnJump;
         jumpAction.performed -= OnJump;
         jumpAction.canceled -= OnJump;
-        
+
+        pauseAction.started -= OnPause;
+        pauseAction.performed -= OnPause;
+        pauseAction.canceled -= OnPause;
+
+        unPauseAction.started -= OnUnPause;
+        unPauseAction.performed -= OnUnPause;
+        unPauseAction.canceled -= OnUnPause;
 
         moveAction.Disable();
         sprintAction.Disable();
         jumpAction.Disable();
+        pauseAction.Disable();
+        unPauseAction.Disable();
+    }
+
+    void OnUnPause(InputAction.CallbackContext context)
+    {
+        if (unPauseEvent != null && context.started)
+        {
+            unPauseEvent.Invoke();
+        }
+    }
+
+    void OnPause(InputAction.CallbackContext context)
+    {
+        if (pauseEvent != null && context.started)
+        {
+            pauseEvent.Invoke();
+        }
     }
 
     void OnMove(InputAction.CallbackContext context)

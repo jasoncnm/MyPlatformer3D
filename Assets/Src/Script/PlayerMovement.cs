@@ -4,10 +4,10 @@ using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
+    public InputReader input;
+
     [SerializeField] LayerMask probeMask = -1;
-
-    [SerializeField] InputReader input;
-
+   
     [SerializeField] Transform Cam;
 
     [SerializeField] Renderer debugPlayerRenderer;
@@ -61,7 +61,7 @@ public class PlayerMovement : MonoBehaviour
 
     Vector3 forwardMovement;
     Vector3 contactNormal;
-    Vector3 originalposition = new Vector3(0f, 1.55999994f, 0f);
+    Vector3 originalposition = new Vector3(605.580017f, 1.5f, -352.73999f);
     Vector3 originalscale = Vector3.one;
     Vector3 originalGravity = Physics.gravity;
     
