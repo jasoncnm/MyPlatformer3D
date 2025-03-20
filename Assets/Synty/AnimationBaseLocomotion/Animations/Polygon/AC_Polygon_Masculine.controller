@@ -2888,10 +2888,10 @@ AnimatorTransition:
     m_EventTreshold: 0
   - m_ConditionMode: 4
     m_ConditionEvent: FallingDuration
-    m_EventTreshold: 1.5
+    m_EventTreshold: 0.5
   - m_ConditionMode: 3
     m_ConditionEvent: FallingDuration
-    m_EventTreshold: 0.6
+    m_EventTreshold: 0.4
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 7944032249215110309}
   m_Solo: 0
@@ -3313,7 +3313,7 @@ AnimatorTransition:
   m_Conditions:
   - m_ConditionMode: 3
     m_ConditionEvent: FallingDuration
-    m_EventTreshold: 1.5
+    m_EventTreshold: 0.5
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -8277392821935025610}
   m_Solo: 0
@@ -5918,7 +5918,7 @@ AnimatorStateTransition:
   m_Mute: 0
   m_IsExit: 1
   serializedVersion: 3
-  m_TransitionDuration: 0.25
+  m_TransitionDuration: 0.1
   m_TransitionOffset: 0
   m_ExitTime: 0.46428567
   m_HasExitTime: 1
@@ -6578,7 +6578,7 @@ AnimatorTransition:
     m_EventTreshold: 0
   - m_ConditionMode: 4
     m_ConditionEvent: FallingDuration
-    m_EventTreshold: 0.2
+    m_EventTreshold: 0.4
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -133500411534426790}
   m_Solo: 0

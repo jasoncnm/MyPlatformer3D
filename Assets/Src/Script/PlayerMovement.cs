@@ -1,5 +1,6 @@
 
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -53,8 +54,8 @@ public class PlayerMovement : MonoBehaviour
     bool _JumpReleased = false;
     bool _OnSlope = false;
     bool _Jump = false;
-    bool _MoveDisable;
     bool _Grounded;
+    bool _HoldJump = false;
 
     public Vector3 velocity{ get; private set; }
 
@@ -110,7 +111,6 @@ public class PlayerMovement : MonoBehaviour
     {
         _JumpButtonCancelled = true;
         _JumpButtonDown = false;
-        _Jumping = false;
     }
 
     void OnSprint()
@@ -204,7 +204,7 @@ public class PlayerMovement : MonoBehaviour
         _Stop = rb.linearVelocity.magnitude < 0.001f;
         velocity = rb.linearVelocity;
         DebugCode();
-        
+        Debug.Log("HoldJump: " +_HoldJump);
         _JumpButtonCancelled = false;
         _JumpButtonDown = false;
     }
@@ -301,9 +301,11 @@ public class PlayerMovement : MonoBehaviour
         timeStepsSinceLastJump++;
 
 
-        _AniGrounded = _Grounded || SnapToGround();
-        if (_AniGrounded)
+        _AniGrounded = _Grounded || SnapToGround() || (timeStepsSinceLastGrounded < 8);
+        Debug.Log(_AniGrounded);
+        if (_Grounded || SnapToGround())
         {
+            // Debug.Log(timeStepsSinceLastGrounded);
             timeStepsSinceLastGrounded = 0;
             if (groundContactCount > 1)
             {
@@ -361,7 +363,7 @@ public class PlayerMovement : MonoBehaviour
             rb.AddForce(Vector3.up * jump, ForceMode.Impulse);
         }
 
-        if (_JumpReleased)
+        if (_JumpReleased && _HoldJump)
         {
             rb.linearVelocity = Vector3.Scale(rb.linearVelocity, new Vector3(1f, 0.5f, 1f));
             // rb.linearVelocity = new Vector3(rb.linearVelocity.x, rb.linearVelocity.y * 0.5f, rb.linearVelocity.z);
@@ -483,6 +485,12 @@ public class PlayerMovement : MonoBehaviour
     public bool IsGround()
     {
         return coyoteTimeCounter > 0f;
+    }
+
+    public void SetHoldJump(Toggle toggle)
+    {
+        _HoldJump = toggle.isOn;
+        // Debug.Log(_HoldJump);
     }
 
 }

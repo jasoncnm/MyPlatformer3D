@@ -60,7 +60,7 @@ public class PlayerAnimation : MonoBehaviour
             animator.SetInteger(currentGaitParam, 3);
         }
         
-        float fallDuration = 1.5f / 0.8f * playerMovement.fallTime;
+        float fallDuration = playerMovement.fallTime;
 
         animator.SetFloat(fallingDurationParam, fallDuration);
 

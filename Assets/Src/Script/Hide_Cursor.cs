@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Hide_Cursor : MonoBehaviour
 {
@@ -6,7 +7,12 @@ public class Hide_Cursor : MonoBehaviour
     void Start()
     {
         Cursor.lockState = CursorLockMode.Confined;
-        Cursor.visible = false;
+        Cursor.visible = true;
+    }
+
+    public void SetHide(Toggle toggle)
+    {
+        Cursor.visible = !toggle.isOn;
     }
 
 }

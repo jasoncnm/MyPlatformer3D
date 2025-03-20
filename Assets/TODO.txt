@@ -1,3 +1,6 @@
 TODO:
  - jumpad squash and stretch
  - New Mechanic: flip platform while jump 
+ - 房间穿越
+  - 物体抓取移动
+  - 物体玩家大小
