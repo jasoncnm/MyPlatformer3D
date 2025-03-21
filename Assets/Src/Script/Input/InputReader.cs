@@ -10,6 +10,7 @@ public class InputReader : ScriptableObject
     [SerializeField] public InputActionAsset asset;
 
     public event UnityAction<Vector2> moveEvent;
+
     public event UnityAction jumpEvent;
     public event UnityAction jumpCancelledEvent;
 
@@ -110,8 +111,10 @@ public class InputReader : ScriptableObject
     void OnMove(InputAction.CallbackContext context)
     {
         moveEvent?.Invoke(context.ReadValue<Vector2>());
+
     }
 
+    
 
     void OnSprint(InputAction.CallbackContext context)
     {

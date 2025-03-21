@@ -1,7 +1,7 @@
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -19,6 +19,8 @@ public class GameManager : MonoBehaviour
     bool _Pause = false;
     private void OnEnable()
     {
+        Cursor.lockState = CursorLockMode.Confined;
+        Cursor.visible = true;
         pauseMenu.SetActive(false);
         input.pauseEvent += OnPause;
         input.unPauseEvent += OnUnPause;
@@ -87,5 +89,12 @@ public class GameManager : MonoBehaviour
     {
         Application.Quit();
     }
+
+
+    public void SetHide(Toggle toggle)
+    {
+        Cursor.visible = !toggle.isOn;
+    }
+
 
 }

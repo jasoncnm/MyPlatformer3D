@@ -43,23 +43,28 @@ public class PlayerAnimation : MonoBehaviour
         animator.SetFloat(moveSpeedParam, moveSpeed);
         animator.SetFloat(isStrafingParam, strafing);
 
-        if (moveSpeed <= 6f)
+        if (moveSpeed <= 6f && playerMovement._Moving)
         {
             animator.SetInteger(currentGaitParam, 0);
         }
-        else if (moveSpeed <= 7f)
+        else if (moveSpeed <= 7f && playerMovement._Moving)
         {
             animator.SetInteger(currentGaitParam, 1);
         }
-        else if (moveSpeed <= 8f)
+        else if (moveSpeed <= 8f && playerMovement._Moving)
         {
             animator.SetInteger(currentGaitParam, 2);
         }
-        else if (moveSpeed > 8f)
+        else if (moveSpeed > 8f && playerMovement._Moving)
         {
             animator.SetInteger(currentGaitParam, 3);
         }
         
+        if (!playerMovement._Moving)
+        {
+            animator.SetInteger(currentGaitParam, 0);
+        }
+
         float fallDuration = playerMovement.fallTime;
 
         animator.SetFloat(fallingDurationParam, fallDuration);
