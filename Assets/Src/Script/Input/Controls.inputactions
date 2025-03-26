@@ -175,28 +175,6 @@
                 },
                 {
                     "name": "",
-                    "id": "f2f1672a-1c14-4bef-a2b2-efaa60565ab8",
-                    "path": "<Joystick>/{Hatswitch}",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Joystick;GamePad",
-                    "action": "Look",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "4117ee9e-70a2-43c8-8dbc-19f5c74a1ec4",
-                    "path": "<Mouse>/position",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": ";KeyBoard&Mouse",
-                    "action": "Look",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "74d876f1-ce75-459a-b729-7ac7c18c589f",
                     "path": "<Mouse>/delta",
                     "interactions": "",

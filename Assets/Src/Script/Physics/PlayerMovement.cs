@@ -1,14 +1,26 @@
 
+using MoreMountains.Tools;
+using System.Reflection;
+using Unity.Cinemachine;
 using UnityEngine;
+using UnityEngine.ProBuilder.MeshOperations;
 using UnityEngine.UI;
+
 
 public class PlayerMovement : MonoBehaviour
 {
+    #region Variables
+    enum Mode { ThirdPerson = 0, FirstPerson = 1 }
+
     public InputReader input;
+
+    IPlayerMode playerMode;
 
     [SerializeField] LayerMask probeMask = -1;
    
-    [SerializeField] Transform Cam;
+    [SerializeField] CinemachineCamera[] Cameras;
+
+    [SerializeField] Transform PlayerModel;
 
     [SerializeField] Renderer debugPlayerRenderer;
 
@@ -40,6 +52,7 @@ public class PlayerMovement : MonoBehaviour
     float minGroundDotProduct;
     float coyoteTimeCounter;
     float speed;
+    float rotateAngle = 0;
 
     public bool _Jumping { get; private set; } = false;
     public bool _AniGrounded { get; private set; } = true;
@@ -58,6 +71,7 @@ public class PlayerMovement : MonoBehaviour
     bool _HoldJump = false;
 
     public Vector3 velocity{ get; private set; }
+    public Vector3 forwardDir, reverseDir;
 
     Vector3 forwardMovement;
     Vector3 contactNormal;
@@ -71,11 +85,14 @@ public class PlayerMovement : MonoBehaviour
 
     Rigidbody rb;
 
+    int cameraIndex = -1;
     int timeStepsSinceLastGrounded = 0;
     int timeStepsSinceLastJump = 0;
     int groundContactCount = 0;
-  
 
+    #endregion
+
+    #region InputEvents
     private void OnEnable()
     {
         input.moveEvent += OnMove;
@@ -124,7 +141,9 @@ public class PlayerMovement : MonoBehaviour
         _Sprint = false;
     }
 
+    #endregion
 
+    #region Debug
     private void OnValidate()
     {
         Physics.gravity = Vector3.down * gravityScale;
@@ -132,7 +151,22 @@ public class PlayerMovement : MonoBehaviour
         minGroundDotProduct = Mathf.Cos(maxGroundAngle * Mathf.Deg2Rad);
     }
 
+    void DebugCode()
+    {
+        debugPlayerRenderer.material.SetColor("_BaseColor", _AniGrounded ? Color.white : Color.black);
+        // Debug.Log("HoldJump: " + _HoldJump);
+        // Debug.Log(_AniGrounded);
+        // Debug.Log(_Jumping);
+    }
 
+
+    private void OnDrawGizmos()
+    {
+        if (rb != null) Gizmos.DrawLine(rb.position, Vector3.down * probeDistance);
+    }
+    #endregion
+
+    #region Init Code
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
@@ -142,80 +176,52 @@ public class PlayerMovement : MonoBehaviour
         rb = gameObject.GetComponent<Rigidbody>();
         velPower = 0.7f;
         turnSmoothTime = 0.0473f;
+
     }
-
-    private void OnDrawGizmos()
-    {
-        if (rb != null) Gizmos.DrawLine(rb.position, Vector3.down * probeDistance);
-    }
-
-
-    Vector3 GetPlayerVelocity(float dirX, float dirZ)
-    {
-        Vector3 result;
-        if (Mathf.Abs(dirX) > 0f || Mathf.Abs(dirZ) > 0f)
-        {
-            
-            Vector3 rbDir = rb.linearVelocity.normalized;
-            float velDot = Vector2.Dot(new Vector2(dirX, dirZ), new Vector2(rbDir.x, rbDir.z));
-            // Debug.Log(velDot);
-
-            float targetAngle = Mathf.Atan2(dirX, dirZ) * Mathf.Rad2Deg + Cam.eulerAngles.y;
-            targetAngle = Mathf.Abs(targetAngle) < 0.0001f ? 0 : targetAngle;
-            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
-            angle = Mathf.Abs(angle) < 0.0001f ? 0 : angle;
-
-            transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
-
-            Vector3 Dir = Quaternion.Euler(0.0f, targetAngle, 0.0f) * Vector3.forward;
-
-            Vector3 targetVelocity = Dir.normalized * speed;
-
-            Vector3 VelocityDiff = targetVelocity - rb.linearVelocity;
-
-            float accelRate = acceleration;
-
-            result = new Vector3(Mathf.Pow(Mathf.Abs(VelocityDiff.x) * accelRate, velPower) * Mathf.Sign(VelocityDiff.x), 0.0f,
-                        Mathf.Pow(Mathf.Abs(VelocityDiff.z) * accelRate, velPower) * Mathf.Sign(VelocityDiff.z));
-        }
-        else
-        {
-            result = Vector3.zero;
-        }
-        return result;
-    }
-
     private void Start()
     {
-        transform.position = originalposition;
+        originalposition = transform.position;
         transform.rotation = originalrotation;
         transform.localScale = originalscale;
+        // TODO: TEMPORARY! need to implement switch mode
+        SwitchPlayerModeTo(Mode.ThirdPerson);
+    }
+    #endregion
+
+    #region UpdateMethods
+    void SwitchPlayerModeTo(Mode to)
+    {
+        if (cameraIndex != (int)to)
+        {
+            bool _ThirdPerson = to == Mode.ThirdPerson;
+            playerMode = _ThirdPerson ? new ThirdPersonMode() : new FirstPersonMode();
+            PlayerModel.gameObject.SetActive(_ThirdPerson);
+            Cameras[(int)to].Priority.Value = 2;
+            Cameras[(int)(to + 1) % 2].Priority.Value = 1;
+            
+            if (to == Mode.FirstPerson)
+            {
+                CinemachinePanTilt panTilt = Cameras[(int)Mode.FirstPerson].GetComponent<CinemachinePanTilt>();
+                InputAxis A = new() { Value = transform.rotation.eulerAngles.y, Range = new Vector2(-180, 180), Wrap = true, Center = 0, Recentering = InputAxis.RecenteringSettings.Default };
+                panTilt.PanAxis = A;
+
+                InputAxis B = new() { Value = transform.rotation.eulerAngles.x, Range = new Vector2(-180, 180), Wrap = true, Center = 0, Recentering = InputAxis.RecenteringSettings.Default };
+                panTilt.TiltAxis = B;
+            }
+            
+            cameraIndex = (int)to;
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    void MoveAndTurn()
     {
-        Debug.Log(moveValue.magnitude);
+        // Debug.Log(moveValue.magnitude);
         _Moving = moveValue.magnitude > 0.001f;
         Vector3 direction = new Vector3(moveValue.x, 0.0f, moveValue.y).normalized;
-        SimulateMovement(direction.x, direction.z, _Sprint, moveValue.magnitude);
-        SimulateJump(_JumpButtonDown, _JumpButtonCancelled);
-
-        
-        _Stop = rb.linearVelocity.magnitude < 0.01f;
-        velocity = rb.linearVelocity;
-        DebugCode();
-        
-        _JumpButtonCancelled = false;
-        _JumpButtonDown = false;
-    }
-
-
-    void SimulateMovement(float dirX, float dirZ, bool sprint, float ratio)
-    {
-
+        float ratio = moveValue.magnitude;
         Debug.Assert(ratio >= 0f && ratio <= 1.001f, "Assertion Faile (ratio : " + ratio.ToString() + ")");
-        if (sprint)
+        
+        if (_Sprint)
         {
             speed = normalSpeed * sprintFactor;
             _Walk = false;
@@ -227,13 +233,15 @@ public class PlayerMovement : MonoBehaviour
             speed = normalSpeed * ratio;
         }
 
-        // Debug.Log("DIRX: " + dirX.ToString() + " DIRZ: " + dirZ.ToString());
-        forwardMovement = GetPlayerVelocity(dirX, dirZ);
+        // TODO: FixThis
+        forwardMovement = playerMode.SimulateMovement(direction.x, direction.z, speed, acceleration, velPower, Cameras[cameraIndex].transform.eulerAngles.y, transform.eulerAngles.y,
+                                           turnSmoothTime, ref turnSmoothVelocity, ref rotateAngle, rb.linearVelocity);
+        transform.rotation = Quaternion.Euler(0.0f, rotateAngle, 0.0f);
     }
 
     void SimulateJump(bool buttonDown, bool buttonUp)
     {
-        
+
         if (buttonDown)
         {
             jumpBufferCounter = jumpBufferTime;
@@ -266,6 +274,44 @@ public class PlayerMovement : MonoBehaviour
 
     }
 
+    #endregion
+
+    #region Update Code
+    // Update is called once per frame
+    void Update()
+    {
+        // NOTE: Test Code
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            SwitchPlayerModeTo(Mode.FirstPerson);
+        }
+        else if (Input.GetKeyDown(KeyCode.T))
+        {
+            SwitchPlayerModeTo(Mode.ThirdPerson);
+        }
+
+        MoveAndTurn();
+        SimulateJump(_JumpButtonDown, _JumpButtonCancelled);
+        _Stop = rb.linearVelocity.magnitude < 0.01f;
+        velocity = rb.linearVelocity;
+        DebugCode();
+        _JumpButtonCancelled = false;
+        _JumpButtonDown = false;
+    }
+
+    private void FixedUpdate()
+    {
+        UpdateState();
+
+        Jump();
+        Move();
+
+        ClearState();
+    }
+
+    #endregion
+
+    #region FixUpdateMethods
     bool SnapToGround()
     {
         float speed = rb.linearVelocity.magnitude;
@@ -342,15 +388,6 @@ public class PlayerMovement : MonoBehaviour
         _JumpReleased = false;
     }
 
-    private void FixedUpdate()
-    {
-        UpdateState();
-        
-        Jump();
-        Move();
-
-        ClearState();
-    }
 
     void Jump()
     {
@@ -422,14 +459,7 @@ public class PlayerMovement : MonoBehaviour
 
         }
     }
-    public Vector3 forwardDir, reverseDir;
-    void DebugCode()
-    {
-        debugPlayerRenderer.material.SetColor("_BaseColor", _AniGrounded ? Color.white : Color.black);
-        // Debug.Log("HoldJump: " + _HoldJump);
-        // Debug.Log(_AniGrounded);
-        // Debug.Log(_Jumping);
-    }
+
 
     public void ResetState()
     {
@@ -439,6 +469,9 @@ public class PlayerMovement : MonoBehaviour
         rb.linearVelocity = Vector3.zero;
     }
 
+    #endregion
+
+    #region Collisions
     void EvaluateColllision(Collision collision)
     {
         for (int i = 0; i < collision.contactCount; i++)
@@ -482,6 +515,7 @@ public class PlayerMovement : MonoBehaviour
     private void OnCollisionStay(Collision collision)
     {
         EvaluateColllision(collision);
+
     }
 
     private void OnCollisionExit(Collision collision)
@@ -489,6 +523,26 @@ public class PlayerMovement : MonoBehaviour
         fallTime = 0f;
         _Grounded = false;
     }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.CompareTag("Inside"))
+        {
+            SwitchPlayerModeTo(Mode.FirstPerson);
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Inside"))
+        {
+            SwitchPlayerModeTo(Mode.ThirdPerson);
+        }
+    }
+
+    #endregion
+
+    #region Public Methods
 
     public bool IsGround()
     {
@@ -500,5 +554,7 @@ public class PlayerMovement : MonoBehaviour
         _HoldJump = toggle.isOn;
         // Debug.Log(_HoldJump);
     }
+
+    #endregion
 
 }

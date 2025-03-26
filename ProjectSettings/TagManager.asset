@@ -6,6 +6,9 @@ TagManager:
   tags:
   - Platforms
   - Walls
+  - PerspectiveChange
+  - OutSide
+  - Inside
   layers:
   - Default
   - TransparentFX

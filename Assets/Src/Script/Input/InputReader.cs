@@ -10,6 +10,7 @@ public class InputReader : ScriptableObject
     [SerializeField] public InputActionAsset asset;
 
     public event UnityAction<Vector2> moveEvent;
+    public event UnityAction<Vector2> lookEvent;
 
     public event UnityAction jumpEvent;
     public event UnityAction jumpCancelledEvent;
@@ -20,6 +21,7 @@ public class InputReader : ScriptableObject
     public event UnityAction pauseEvent;
     public event UnityAction unPauseEvent;
 
+    InputAction lookAction;
     InputAction moveAction;
     InputAction sprintAction;
     InputAction jumpAction;
@@ -28,12 +30,16 @@ public class InputReader : ScriptableObject
 
     private void OnEnable()
     {
-        
+        lookAction = asset.FindAction("Look", true);
         moveAction = asset.FindAction("Move", true);
         sprintAction = asset.FindAction("Sprint", true);
         jumpAction = asset.FindAction("Jump", true);
         pauseAction = asset.FindAction("Pause", true);
         unPauseAction = asset.FindAction("UnPause", true);
+
+        lookAction.started += OnLook;
+        lookAction.performed += OnLook;
+        lookAction.canceled += OnLook;
 
         moveAction.started   += OnMove;
         moveAction.performed += OnMove;
@@ -55,6 +61,7 @@ public class InputReader : ScriptableObject
         unPauseAction.performed += OnUnPause;
         unPauseAction.canceled += OnUnPause;
 
+        lookAction.Enable();
         moveAction.Enable();
         sprintAction.Enable();
         jumpAction.Enable();
@@ -65,6 +72,11 @@ public class InputReader : ScriptableObject
 
     private void OnDisable()
     {
+        lookAction.started -= OnLook;
+        lookAction.performed -= OnLook;
+        lookAction.canceled -= OnLook;
+
+
         moveAction.started -= OnMove;
         moveAction.performed -= OnMove;
         moveAction.canceled -= OnMove;
@@ -85,6 +97,7 @@ public class InputReader : ScriptableObject
         unPauseAction.performed -= OnUnPause;
         unPauseAction.canceled -= OnUnPause;
 
+        lookAction.Disable();
         moveAction.Disable();
         sprintAction.Disable();
         jumpAction.Disable();
@@ -114,7 +127,10 @@ public class InputReader : ScriptableObject
 
     }
 
-    
+    void OnLook(InputAction.CallbackContext  context)
+    {
+        lookEvent?.Invoke(context.ReadValue<Vector2>());
+    }
 
     void OnSprint(InputAction.CallbackContext context)
     {

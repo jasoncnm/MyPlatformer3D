@@ -4,16 +4,16 @@ public class PlayerAnimation : MonoBehaviour
 {
 
     public PlayerMovement playerMovement;
+    public Animator animator;
+
     [SerializeField] float strafing = 0f;
 
-    Animator animator;
     int isGoundedParam, isJumpingParam, isMovingParam, isWalkingParam, moveSpeedParam, isStopParam, isStrafingParam, currentGaitParam, fallingDurationParam;
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        animator = GetComponent<Animator>();
 
         int startParam = Animator.StringToHash("IsStarting");
         //animator.SetBool(startParam, true);
