@@ -20,7 +20,7 @@ public class GameManager : MonoBehaviour
     private void OnEnable()
     {
         Cursor.lockState = CursorLockMode.Confined;
-        Cursor.visible = true;
+        Cursor.visible = false;
         pauseMenu.SetActive(false);
         input.pauseEvent += OnPause;
         input.unPauseEvent += OnUnPause;

@@ -9,6 +9,8 @@ TagManager:
   - PerspectiveChange
   - OutSide
   - Inside
+  - TeleportIn
+  - TeleportOut
   layers:
   - Default
   - TransparentFX
@@ -20,8 +22,8 @@ TagManager:
   - Platform
   - Player
   - Wall
-  - 
-  - 
+  - room1
+  - room2
   - 
   - 
   - 

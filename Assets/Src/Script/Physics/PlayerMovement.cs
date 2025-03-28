@@ -16,6 +16,8 @@ public class PlayerMovement : MonoBehaviour
 
     IPlayerMode playerMode;
 
+    [SerializeField] Mode startMode;
+
     [SerializeField] LayerMask probeMask = -1;
    
     [SerializeField] CinemachineCamera[] Cameras;
@@ -181,10 +183,10 @@ public class PlayerMovement : MonoBehaviour
     private void Start()
     {
         originalposition = transform.position;
-        transform.rotation = originalrotation;
+        originalrotation = transform.rotation;
         transform.localScale = originalscale;
         // TODO: TEMPORARY! need to implement switch mode
-        SwitchPlayerModeTo(Mode.ThirdPerson);
+        SwitchPlayerModeTo(startMode);
     }
     #endregion
 
@@ -202,11 +204,9 @@ public class PlayerMovement : MonoBehaviour
             if (to == Mode.FirstPerson)
             {
                 CinemachinePanTilt panTilt = Cameras[(int)Mode.FirstPerson].GetComponent<CinemachinePanTilt>();
-                InputAxis A = new() { Value = transform.rotation.eulerAngles.y, Range = new Vector2(-180, 180), Wrap = true, Center = 0, Recentering = InputAxis.RecenteringSettings.Default };
-                panTilt.PanAxis = A;
+                panTilt.PanAxis.Value = transform.rotation.eulerAngles.y;
 
-                InputAxis B = new() { Value = transform.rotation.eulerAngles.x, Range = new Vector2(-180, 180), Wrap = true, Center = 0, Recentering = InputAxis.RecenteringSettings.Default };
-                panTilt.TiltAxis = B;
+                panTilt.TiltAxis.Value = transform.rotation.eulerAngles.x;
             }
             
             cameraIndex = (int)to;
@@ -233,7 +233,6 @@ public class PlayerMovement : MonoBehaviour
             speed = normalSpeed * ratio;
         }
 
-        // TODO: FixThis
         forwardMovement = playerMode.SimulateMovement(direction.x, direction.z, speed, acceleration, velPower, Cameras[cameraIndex].transform.eulerAngles.y, transform.eulerAngles.y,
                                            turnSmoothTime, ref turnSmoothVelocity, ref rotateAngle, rb.linearVelocity);
         transform.rotation = Quaternion.Euler(0.0f, rotateAngle, 0.0f);

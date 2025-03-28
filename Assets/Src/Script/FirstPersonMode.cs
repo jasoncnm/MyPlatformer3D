@@ -8,15 +8,17 @@ public class FirstPersonMode : IPlayerMode
                              float playerAngle, float turnSmoothTime, ref float turnSmoothVelocity, ref float rotateAngle, Vector3 velocity)
     {
         Vector3 result;
+
+        //  Calculate Rotation
+        float targetAngle = cameraAngle;
+        targetAngle = Mathf.Abs(targetAngle) < 0.0001f ? 0 : targetAngle;
+        float angle = Mathf.SmoothDampAngle(playerAngle, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+        angle = Mathf.Abs(angle) < 0.0001f ? 0 : angle;
+        rotateAngle = angle;
+
+        // Calculate Velocity
         if (Mathf.Abs(dirX) > 0f || Mathf.Abs(dirZ) > 0f)
         {
-
-            float targetAngle = cameraAngle;
-            targetAngle = Mathf.Abs(targetAngle) < 0.0001f ? 0 : targetAngle;
-            float angle = Mathf.SmoothDampAngle(playerAngle, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
-            angle = Mathf.Abs(angle) < 0.0001f ? 0 : angle;
-
-            rotateAngle = angle;
 
             Vector3 Dir = Quaternion.Euler(0.0f, targetAngle, 0.0f) * new Vector3(dirX, 0f, dirZ).normalized;
 
@@ -33,6 +35,7 @@ public class FirstPersonMode : IPlayerMode
         {
             result = Vector3.zero;
         }
+
         return result;
     }
-    }
+}

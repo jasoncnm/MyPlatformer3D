@@ -5,9 +5,12 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/DEMO_LEVEL.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Scenes/DEMO_ANTICHAMBER.unity
+    guid: bc9dd130e6cc107489e623327c3876e9
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: e1e48a81312da2a4793847732804d370, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 0c19376eb5cd2a242a7d773b878ba093, type: 3}
